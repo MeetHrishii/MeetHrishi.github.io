@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto" data-theme="dark">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Htbs | MeetHrishi</title>
+<meta name="keywords" content="">
+<meta name="description" content="Htbs - MeetHrishi">
+<meta name="author" content="Hrishikesh Jadhav">
+<link rel="canonical" href="https://meethrishii.github.io/htb/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.57df9e2f4a2ad21732ca71eb5b4ca5278112faa55ced5451381ef912715a77c9.css" integrity="sha256-V9&#43;eL0oq0hcyynHrW0ylJ4ES&#43;qVc7VRROB75EnFad8k=" rel="preload stylesheet" as="style">
+<link rel="icon" href="https://meethrishii.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://meethrishii.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://meethrishii.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://meethrishii.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://meethrishii.github.io/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" type="application/rss+xml" href="https://meethrishii.github.io/htb/index.xml" title="rss">
+<link rel="alternate" hreflang="en" href="https://meethrishii.github.io/htb/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+</noscript><meta property="og:url" content="https://meethrishii.github.io/htb/">
+  <meta property="og:site_name" content="MeetHrishi">
+  <meta property="og:title" content="Htbs">
+  <meta property="og:locale" content="en-us">
+  <meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Htbs">
+<meta name="twitter:description" content="">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Htbs",
+      "item": "https://meethrishii.github.io/htb/"
+    }
+  ]
+}
+</script>
+</head>
+<body class="list" id="top">
+    <header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="https://meethrishii.github.io/" accesskey="h" title="MeetHrishi (Alt + H)">MeetHrishi</a>
+            <div class="logo-switches">
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main"> 
+<header class="page-header"><div class="breadcrumbs"><a href="https://meethrishii.github.io/">Home</a></div>
+  <h1>
+    Htbs
+  </h1>
+</header>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Editor
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>Attack Chain Summary Discovered an exposed XWiki instance running a vulnerable version. Gained initial access via XWiki RCE (CVE-2025-24893) as the xwiki user. Retrieved database credentials from XWiki configuration files. Reused credentials to SSH as the user oliver. Escalated privileges to root by exploiting a vulnerable SUID ndsudo binary in Netdata (CVE-2024-32019). Recon Initial Scanning A full TCP port scan revealed three open ports: 22, 80, and 8080.
+hrishi@pwn:~/editor$ nmap -p- --min-rate 5000 10.10.11.80 Starting Nmap 7.94SVN ( https://nmap.org ) at 2025-12-05 17:33 IST Warning: 10.10.11.80 giving up on port because retransmission cap hit (10). Nmap scan report for 10.10.11.80 Host is up (0.14s latency). Not shown: 65399 closed tcp ports (conn-refused), 133 filtered tcp ports (no-response) PORT STATE SERVICE 22/tcp open ssh 80/tcp open http 8080/tcp open http-proxy Nmap done: 1 IP address (1 host up) scanned in 22.41 seconds With the open ports identified, I performed a service and version scan for further context.
+...</p>
+  </div>
+  <footer class="entry-footer"><span title='2025-12-05 17:12:30 +0530 IST'>December 5, 2025</span>&nbsp;·&nbsp;<span>8 min</span>&nbsp;·&nbsp;<span>Hrishikesh Jadhav</span></footer>
+  <a class="entry-link" aria-label="post link to Editor" href="https://meethrishii.github.io/htb/editor/"></a>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="https://meethrishii.github.io/">MeetHrishi</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu');
+    if (menu) {
+        
+        const scrollPosition = localStorage.getItem("menu-scroll-position");
+        if (scrollPosition) {
+            menu.scrollLeft = parseInt(scrollPosition, 10);
+        }
+        
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+</body>
+
+</html>
